@@ -6,7 +6,7 @@
   "scripts": {
     "client": "cd client && npm start",
     "server": "cd server && npm start",
-    "start": "concurrently --kill-others \"npm run server\" \"npm run client\""
+    "start": "concurrently --kill-others \"npm run server\" \"npm run client\""
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   "homepage": "https://github.com/dabulla/loginroutine#readme",
   "dependencies": {
     "axios": "^0.18.0",
+    "concurrently": "^4.1.0",
     "express-session": "^1.15.6"
   }
 }
