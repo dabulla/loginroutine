@@ -12,7 +12,7 @@ router.post('/', function(req, res, next) {
   // logoff
   if(req.body.logoff) {
     req.session.loggedin = false;
-    res.send({loggedin: req.session.loggedin});
+    res.send({loggedin: req.session.loggedin, mailvalid: req.session.mailvalid});
     res.end();
     return;
   }
@@ -37,8 +37,9 @@ router.post('/', function(req, res, next) {
         }
         if(row) {
           req.session.loggedin = true;
+          req.session.mailvalid = true;
           req.session.email = email;
-          res.send({loggedin: req.session.loggedin});
+          res.send({loggedin: req.session.loggedin, mailvalid: req.session.mailvalid});
         } else {
           res.send('could not log in (no user or wrong password)');
         }
@@ -57,11 +58,53 @@ router.post('/', function(req, res, next) {
   });
 });
 
-/* GET users listing. */
+/* GET users listing. NOT NEEDED*/
 router.get('/', function(req, res, next) {
-  console.log("Get Users" + req.session.loggedin);
-  res.send({loggedin: req.session.loggedin});
+  res.send({loggedin: req.session.loggedin, mailvalid: req.session.mailvalid});
   res.end();
+});
+
+/* GET users listing. */
+router.put('/', function(req, res, next) {
+  var email = req.body.email;
+	var password = req.body.password;
+  console.log("Register:" + email + " -> " + password);
+
+
+  let db = new sqlite3.Database('./db/users.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+    if (err) {
+      return console.error(err.message);
+    }
+    console.log('Connected to the in-memory SQlite database.');
+  });
+  if (email && password) {
+    db.serialize(() => {
+      db.run('INSERT INTO users (email, password, mailvalid) VALUES (?, ?, 0)', [email, password], (err, result) => {
+        if (err) {
+          // TODO: Add error message "already registered" and success
+          res.send({loggedin: req.session.loggedin, mailvalid: req.session.mailvalid});
+          res.end();
+          console.log("error");
+          return
+        }
+        req.session.loggedin = false;
+        req.session.mailvalid = false;
+        req.session.email = email;
+        res.send({loggedin: req.session.loggedin, mailvalid: req.session.mailvalid});
+        res.end();
+        console.log("inserted");
+      });
+    });
+	} else {
+		res.send('could not log in');
+		res.end();
+  }
+  db.close((err) => {
+    if (err) {
+      return console.error(err.message);
+    }
+    console.log('Close the database connection.');
+  });
 });
 
 module.exports = router;

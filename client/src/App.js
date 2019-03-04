@@ -12,7 +12,8 @@ class App extends Component {
       email: "",
       password: "",
       remember: false,
-      loggedin: false
+      loggedin: false,
+      mailvalid: false
     };
   }
   handleChange = event => {
@@ -46,31 +47,44 @@ class App extends Component {
       axios.post('/users', {email: this.state.email, password: this.state.password})
       .then(function(response) {
         console.log(response);
-        alert("DBG: return from submit " + JSON.stringify(response));
-        that.setState({loggedin: response.data.loggedin});
-        that.forceUpdate();
-        //Perform action based on response
+        that.setState({loggedin: response.data.loggedin, mailvalid: response.data.mailvalid});
+        if(!that.state.loggedin) {
+          alert("Konnte nicht eingeloggt werden!\nTestuser: info@danielbulla.de\nPasswort:test123")
+        }
     })
       .catch(function(error){
         console.log(error);
-        //Perform action based on error
       });
     } catch (e) {
       alert(e.message);
     }
   }
-  componentDidMount() {
+  handleRegister = event => {
+    event.preventDefault();
+    try {
+      // TODO: client side hash password
+      let that = this;
+      axios.put('/users', {email: this.state.email, password: this.state.password})
+      .then(function(response) {
+        console.log(response);
+        that.setState({loggedin: response.data.loggedin, mailvalid: response.data.mailvalid});
+    })
+      .catch(function(error){
+        console.log(error);
+      });
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+  /*componentDidMount() {
     //HACK: gets session object to read "loggedin" property :(
     let that = this;
     axios.get('/users')
     .then(function(response) {
-      alert("DBG: return from get " + JSON.stringify(response));
-      that.setState({loggedin: response.data.loggedin});
-      that.forceUpdate();
+      that.setState({loggedin: response.data.loggedin, mailvalid: response.data.mailvalid});
     });
-  }
+  }*/
   render() {
-    console.log("DBG: loggedin: " + this.state.loggedin)
     if(this.state.loggedin)
     {
       return <div>
@@ -107,7 +121,7 @@ class App extends Component {
               />
           </Form.Group>
           <Button type="submit">Submit</Button>
-          <p>Register</p>
+          <button onClick={this.handleRegister.bind(this)}>Register</button>
           <p>Forgot password</p>
         </Form>
       </div>
