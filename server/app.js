@@ -1,6 +1,6 @@
 var createError = require('http-errors');
 var express = require('express');
-//var session = require('express-session');
+var session = require('express-session');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
@@ -8,7 +8,15 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
+var sqlite3 = require('sqlite3').verbose();
+var session = require('express-session');
+var bodyParser = require('body-parser');
+
 var app = express();
+
+app.use(session({ secret: 'secret3d', cookie: { maxAge: 60000 }}))
+app.use(bodyParser.urlencoded({extended : true}));
+app.use(bodyParser.json());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -39,12 +47,30 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-// app.use(session({
-// 	secret: 'secret',
-// 	resave: true,
-// 	saveUninitialized: true
-// }));
-// app.use(bodyParser.urlencoded({extended : true}));
-// app.use(bodyParser.json());
+// maxAge: new Date(Date.now() + 3600000),
+/*app.use(express.session({
+  secret: 'secret',
+  resave: true,
+  saveUninitialized: true
+}));*/
+
+
+let db = new sqlite3.Database('./db/users.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+  if (err) {
+    return console.error(err.message);
+  }
+  console.log('Connected to the in-memory SQlite database.');
+});
+//db.run('create table if not exists users (email VARCHAR NOT NULL UNIQUE, password CHAR(256), validemail BOOL)')
+db.run('create table if not exists users (email TEXT NOT NULL UNIQUE, password TEXT, mailvalid INT)', (err, result) => {
+  if (err) throw err;
+  console.log("created table or already existed");
+  // INSERT Testuser
+  db.run('INSERT INTO users (email, password, mailvalid) VALUES (\'info@danielbulla.de\', \'test123\', 1)', (err, result) => {
+    //if (err) throw err;
+    console.log("inserted");
+  });
+});
+
 
 module.exports = app;
